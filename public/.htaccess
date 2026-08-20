@@ -1,0 +1,16 @@
+# Insightyyy — Apache config for shared hosting (copied into dist/ at build time)
+
+AddType application/manifest+json .webmanifest
+
+<IfModule mod_headers.c>
+  # Hashed build assets never change: cache forever.
+  <FilesMatch "\.(js|css|png|woff2)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  # The entry points MUST revalidate, or deployed updates never reach installed
+  # apps (the service worker itself would be served stale). Declared after the
+  # rule above so it wins for these files.
+  <FilesMatch "^(index\.html|sw\.js|manifest\.webmanifest)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>

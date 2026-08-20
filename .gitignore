@@ -1,0 +1,11 @@
+# Dependencies & build output — reproducible, never committed
+node_modules/
+dist/
+
+# Secrets: Supabase credentials live ONLY in local env files
+.env
+.env.local
+.env.*.local
+
+Insightyyy-upload.zip
+*.log
