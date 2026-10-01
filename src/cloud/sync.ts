@@ -1,5 +1,6 @@
 import { db, type InsightyyyDB } from '../db/db';
 import { getMeta, updateMeta } from '../db/db';
+import { listProjects } from '../db/projects';
 import type { Block, Insight, Project } from '../db/types';
 import { base64ToBuffer, bufferToBase64 } from '../backup/format';
 import { decryptString, encryptString, type CipherEnvelope } from './crypto';
@@ -273,10 +274,6 @@ export async function syncNow(database: InsightyyyDB = db): Promise<void> {
     await pushProjects(database, mk, userId);
     await pushInsights(database, mk, userId);
     await pullAll(database, mk);
-    const { active } = await import('../db/projects').then((m) => m.listProjects(database));
-    for (const project of active) {
-      await ensureBlock(project.id, database);
-    }
     setState({
       phase: 'idle',
       pendingPush: await countPending(database),
@@ -290,6 +287,18 @@ export async function syncNow(database: InsightyyyDB = db): Promise<void> {
       detail: err instanceof Error ? err.message : String(err),
     });
   } finally {
+    // Blocks are capture-critical: top them up even when push/pull failed, so one
+    // bad row can never starve every project of reference numbers. ensureBlock
+    // swallows its own network errors, and pushed projects already exist
+    // server-side, so this is safe in every state.
+    try {
+      const { active } = await listProjects(database);
+      for (const project of active) {
+        await ensureBlock(project.id, database);
+      }
+    } catch {
+      // never let block top-up mask or replace the primary sync outcome
+    }
     syncing = false;
   }
 }

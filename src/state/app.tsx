@@ -289,10 +289,16 @@ export function AppProvider({
         setPersistState(await requestPersistence());
       }
       selectProject(project.id);
+      if (cloudActive) {
+        // Push the project NOW and then reserve its first number block — reserving
+        // before the row exists server-side is rejected, so order matters here.
+        await syncNow();
+        await ensureBlock(project.id);
+      }
       await refresh();
       return project;
     },
-    [refresh, selectProject],
+    [refresh, selectProject, cloudActive],
   );
 
   const updateProject = useCallback(
@@ -337,6 +343,10 @@ export function AppProvider({
         .map((b) => b.value)
         .join('\n');
       const direction = resolveDirection(textParts, dirOverride);
+      if (cloudActive && (await peekNextRef(activeProject.id)) === null) {
+        // Self-heal before failing: reserve a block on the spot (no-op offline).
+        await ensureBlock(activeProject.id);
+      }
       const insight = await guardWrite(() =>
         captureInsight(
           { project_id: activeProject.id, source_tag: sourceTag, content, direction },
