@@ -8,4 +8,5 @@ dist/
 .env.*.local
 
 Insightyyy-upload.zip
+Insightyyy-Cloud-upload.zip
 *.log
