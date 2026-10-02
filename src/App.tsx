@@ -14,6 +14,7 @@ import { listInsights } from './db/insights';
 import { printProject } from './pdf/print';
 import { consumeShareIntake } from './pwa/shareIntake';
 import { AuthPage } from './components/AuthPage';
+import { Landing } from './components/Landing';
 import { isCloudConfigured } from './cloud/supabase';
 import { restoreSession } from './cloud/auth';
 import { startSyncLoop, stopSyncLoop } from './cloud/sync';
@@ -169,7 +170,8 @@ const OFFLINE_PREF_KEY = 'insightyyy.ui.offlineMode'; // UI preference only, nev
 
 type GateState =
   | { kind: 'loading' }
-  | { kind: 'auth'; mode?: 'unlock'; lockedEmail?: string }
+  | { kind: 'landing' }
+  | { kind: 'auth'; mode?: 'unlock' | 'signin' | 'signup'; lockedEmail?: string }
   | { kind: 'app'; cloudActive: boolean };
 
 /** When Supabase is configured, the credentials page gates the app; the vault key
@@ -186,9 +188,11 @@ function AuthGate() {
       }
       const session = await restoreSession().catch(() => null);
       if (session) {
+        // Returning user: straight to unlock, no marketing page.
         setGate({ kind: 'auth', mode: 'unlock', lockedEmail: session.email });
       } else {
-        setGate({ kind: 'auth' });
+        // Fresh visitor: the public homepage is the front door.
+        setGate({ kind: 'landing' });
       }
     })();
   }, []);
@@ -200,17 +204,29 @@ function AuthGate() {
     }
   }, [gate]);
 
+  const useOffline = () => {
+    localStorage.setItem(OFFLINE_PREF_KEY, '1');
+    setGate({ kind: 'app', cloudActive: false });
+  };
+
   if (gate.kind === 'loading') return null;
+  if (gate.kind === 'landing') {
+    return (
+      <Landing
+        onSignIn={() => setGate({ kind: 'auth', mode: 'signin' })}
+        onSignUp={() => setGate({ kind: 'auth', mode: 'signup' })}
+        onUseOffline={useOffline}
+      />
+    );
+  }
   if (gate.kind === 'auth') {
     return (
       <AuthPage
         initialMode={gate.mode}
         lockedEmail={gate.lockedEmail}
         onAuthed={() => setGate({ kind: 'app', cloudActive: true })}
-        onUseOffline={() => {
-          localStorage.setItem(OFFLINE_PREF_KEY, '1');
-          setGate({ kind: 'app', cloudActive: false });
-        }}
+        onUseOffline={useOffline}
+        onBack={gate.mode === 'unlock' ? undefined : () => setGate({ kind: 'landing' })}
       />
     );
   }
