@@ -1,0 +1,59 @@
+/* Credentials screen — warm paper family (scoped under .ap so the app's dark
+   theme and this surface never bleed into each other). */
+.ap{
+  --paper:#FAF5EC; --paper-deep:#F3ECDD; --grid:#EAE1CF;
+  --card:#FFFFFF; --aline:#E8DEC9; --aline-strong:#D8CBAE;
+  --aink:#201A12; --aink-soft:#5C5244; --aink-faint:#938A77;
+  --coral:#E8744F; --coral-deep:#D45F3A; --butter:#FFD84D;
+  --err:#B3261E; --err-bg:#FBEAE7;
+  --ashadow:0 2px 10px rgba(66,50,24,.10), 0 16px 38px rgba(66,50,24,.10);
+
+  position:fixed; inset:0; overflow-y:auto; z-index:40;
+  background:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:36px 36px;
+  color:var(--aink); font-family:Figtree,system-ui,sans-serif; line-height:1.5;
+  display:flex; flex-direction:column; align-items:center;
+  padding:40px 16px 30px;
+}
+.ap *{box-sizing:border-box}
+.ap .center{margin:auto;width:100%;max-width:430px}
+.ap .card{background:var(--card);border:1px solid var(--aline);border-radius:22px;box-shadow:var(--ashadow);padding:30px 28px 26px}
+.ap .brand-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.ap .logo{font-family:'Bricolage Grotesque',Figtree,sans-serif;font-weight:800;font-size:22px;letter-spacing:-.01em}
+.ap .stamp{font-size:9px;letter-spacing:.28em;color:var(--aink-faint);border:1px solid var(--aline-strong);border-radius:4px;padding:2px 5px 2px 7px;white-space:nowrap}
+.ap h2{font-family:'Bricolage Grotesque',Figtree,sans-serif;font-weight:800;font-size:30px;letter-spacing:-.015em;line-height:1.05;margin:4px 0 8px}
+.ap .intro{color:var(--aink-soft);font-size:14px;margin:0 0 16px}
+.ap .lock{display:inline-flex;align-items:center;gap:7px;background:#FFF3C4;border:1px solid #EAD58A;border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:600;color:#6B5200;margin:0 0 16px}
+.ap label{display:block;font-size:12.5px;font-weight:700;letter-spacing:.02em;color:var(--aink-soft);margin:14px 0 6px}
+.ap input{width:100%;background:var(--paper);border:1.5px solid var(--aline-strong);border-radius:12px;padding:12px 14px;font:inherit;font-size:15px;color:var(--aink);outline:none;transition:border-color .15s, box-shadow .15s}
+.ap input:focus{border-color:var(--coral);box-shadow:0 0 0 3px rgba(232,116,79,.18)}
+.ap input::placeholder{color:var(--aink-faint)}
+.ap .hint{color:var(--aink-faint);font-size:12.5px;margin:6px 2px 0}
+.ap .error{background:var(--err-bg);border:1px solid #E7B4AD;color:var(--err);border-radius:12px;padding:10px 14px;font-size:13.5px;font-weight:500;margin-top:14px}
+.ap .notice{color:var(--aink-soft);font-size:13.5px;margin-top:12px}
+.ap .btn-main{width:100%;margin-top:18px;border:none;cursor:pointer;border-radius:999px;padding:14px 24px;font-family:inherit;font-weight:700;font-size:16px;background:var(--coral);color:#fff;box-shadow:0 3px 0 var(--coral-deep);transition:filter .15s}
+.ap .btn-main:hover{filter:brightness(1.05)}
+.ap .btn-main:active{transform:translateY(2px);box-shadow:0 1px 0 var(--coral-deep)}
+.ap .btn-main:disabled{opacity:.55;cursor:default}
+.ap .links{display:flex;flex-direction:column;gap:3px;margin-top:16px}
+.ap .linkish{background:none;border:none;cursor:pointer;font:inherit;font-size:13.5px;color:var(--aink-soft);padding:6px 4px;border-radius:8px;text-align:center}
+.ap .linkish b{color:var(--coral);font-weight:700}
+.ap .linkish:hover{background:var(--paper-deep)}
+.ap .divider{height:1px;background:var(--aline);margin:18px -28px 2px}
+
+/* Recovery key reveal — same DNA as the butter "next reference" card */
+.ap .keycard{background:var(--butter);border:2px solid var(--aink);border-radius:16px;box-shadow:4px 4px 0 var(--aink);padding:16px 18px;margin:14px 0 4px;text-align:center}
+.ap .keycard small{display:block;font-weight:800;font-size:10px;letter-spacing:.16em;color:#6B5200;margin-bottom:6px}
+.ap .keycard .key{font-family:'Cascadia Code','SF Mono',Consolas,monospace;font-weight:700;font-size:16.5px;line-height:1.6;user-select:all;overflow-wrap:break-word}
+.ap .keyrow{display:flex;gap:8px;margin-top:14px}
+.ap .btn-soft{flex:1;border:1.5px solid var(--aink);background:var(--card);cursor:pointer;border-radius:999px;padding:10px 16px;font-family:inherit;font-weight:700;font-size:13.5px;color:var(--aink)}
+.ap .btn-soft:hover{background:var(--paper-deep)}
+.ap .ack{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--aink-soft);margin-top:16px;cursor:pointer}
+.ap .ack input{width:auto;margin-top:3px;accent-color:var(--coral)}
+
+.ap .product-line{margin:26px auto 4px;font-size:10px;letter-spacing:.3em;color:var(--aink-faint);text-align:center}
+@media (prefers-reduced-motion: no-preference){
+  .ap .card{animation:ap-rise .45s ease-out both}
+  @keyframes ap-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+}
