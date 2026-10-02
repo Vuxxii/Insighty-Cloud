@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Block, Insight, Project } from '../db/types';
 import { useApp, QUICK_EDIT_WINDOW_MS } from '../state/app';
+import { tagColor } from '../ui/tagColor';
 
 function ImageView({ block }: { block: Extract<Block, { type: 'image' }> }) {
   const url = useMemo(() => URL.createObjectURL(block.blob), [block.blob]);
@@ -83,7 +84,11 @@ export function InsightCard({
         <span className="card-ref">
           {project.prefix}-{insight.ref_id}
         </span>
-        {insight.source_tag && <span className="card-source">{insight.source_tag}</span>}
+        {insight.source_tag && (
+          <span className="card-source" style={{ background: tagColor(insight.source_tag) }}>
+            {insight.source_tag}
+          </span>
+        )}
         <span className="card-date">
           {new Date(insight.timestamp).toLocaleDateString()}{' '}
           {new Date(insight.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

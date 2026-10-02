@@ -31,8 +31,8 @@ export function TopBar({ onPrint }: { onPrint: () => void }) {
     <header className="topbar">
       <div className="brand">
         <span className="brand-name">Insightyyy</span>
-        <span className="brand-stamp" title="Maker's mark">
-          HAKAMI
+        <span className="brand-stamp" title="A H.H. Hakami product">
+          H.H. HAKAMI
         </span>
         <StorageStatus />
         {app.cloudActive && <SyncStatus onAccountClick={() => setMenuOpen(true)} />}

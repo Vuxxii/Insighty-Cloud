@@ -188,6 +188,27 @@ export function CaptureZone() {
   // CAPTURE_SUBMIT_EVENT — a local handler here would double-submit.
   return (
     <div>
+      {/* The butter card: the upcoming reference, known BEFORE submission. */}
+      {app.nextRef !== null ? (
+        <div className="next-card">
+          <div>
+            <small>NEXT REFERENCE</small>
+            <span className="next-big">
+              {app.activeProject.prefix}-{app.nextRef}
+            </span>
+          </div>
+          <span className="next-hand">write me down ↘</span>
+        </div>
+      ) : (
+        app.cloudActive && (
+          <div className="next-card dry">
+            <div>
+              <small>NO RESERVED NUMBERS</small>
+              <span className="muted">Go online once so this device can reserve numbers.</span>
+            </div>
+          </div>
+        )
+      )}
       <div
         className={`capture-zone${dragover ? ' dragover' : ''}`}
         onDragOver={(e) => {
@@ -362,22 +383,6 @@ export function CaptureZone() {
           🔗 Add link
         </button>
         <div className="grow" />
-        {/* The upcoming ref is known BEFORE submission (local: seq+1; cloud: this
-            device's reserved block) so it can be transcribed first. */}
-        {app.nextRef !== null && app.activeProject && (
-          <span
-            className="card-ref"
-            title="The reference number the next capture will receive — guaranteed, even offline."
-            aria-label="Next reference number"
-          >
-            Next: {app.activeProject.prefix}-{app.nextRef}
-          </span>
-        )}
-        {app.cloudActive && app.nextRef === null && app.activeProject && (
-          <span className="muted" title="Connect once so this device can reserve numbers.">
-            No reserved numbers — go online once
-          </span>
-        )}
         <button
           type="button"
           className="btn btn-primary"
