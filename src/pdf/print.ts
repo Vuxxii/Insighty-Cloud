@@ -105,6 +105,7 @@ export function buildPrintDom(
   header.appendChild(
     el('p', 'print-source', `Insightyyy export — ${insights.length} insights`),
   );
+  header.appendChild(el('p', 'print-brand', 'A H.H. HAKAMI PRODUCT'));
   container.appendChild(header);
 
   return new Promise((resolve) => {
