@@ -70,7 +70,7 @@ export function TopBar({ onPrint }: { onPrint: () => void }) {
           {menuOpen && (
             <div
               className="source-history"
-              style={{ right: 0, left: 'auto', minWidth: 260, top: 'calc(100% + 6px)' }}
+              style={{ right: 0, left: 'auto', minWidth: 260, top: 'calc(100% + 6px)', maxHeight: 'none' }}
             >
               <button
                 type="button"

@@ -118,8 +118,12 @@ a {
   gap: 14px;
   padding: 11px 20px;
   border-bottom: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(6px);
+  /* NO backdrop-filter here: filters make this box the containing block for
+     position:fixed descendants, which clips every dialog opened from the top
+     bar (project settings, import, verify) into the bar itself. */
+  background: rgba(255, 255, 255, 0.92);
+  position: relative;
+  z-index: 30; /* menus must paint above the capture pane's butter card */
   flex-wrap: wrap;
 }
 

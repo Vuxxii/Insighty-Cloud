@@ -382,10 +382,12 @@ export function CaptureZone() {
         >
           🔗 Add link
         </button>
-        <div className="grow" />
+      </div>
+      <div className="capture-row">
         <button
           type="button"
           className="btn btn-primary"
+          style={{ width: '100%', padding: '12px 24px', fontSize: 16 }}
           disabled={!canSubmit}
           onClick={() => void submit()}
           title="Ctrl+Enter"
