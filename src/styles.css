@@ -1,24 +1,31 @@
-/* ===== Insightyyy — "Modern Analyst" (PRD §5) ===== */
+/* ===== Insightyyy — "Warm paper, bold ink" (approved redesign, 2026-10) =====
+   Same selectors as the original theme; only the skin changed. */
 
 :root {
-  --bg: #0d1117;
-  --bg-raised: #151b23;
-  --bg-input: #1a222c;
-  --border: #2a3441;
-  --border-strong: #3d4a5c;
-  --text: #e6edf3;
-  --text-dim: #9aa7b4;
-  --text-faint: #6b7684;
-  --accent: #3b9eff;
-  --accent-soft: rgba(59, 158, 255, 0.14);
-  --danger: #ff5c5c;
-  --danger-soft: rgba(255, 92, 92, 0.12);
-  --ok: #3fd68f;
-  --warn: #ffb84d;
-  --radius: 10px;
-  --font:
-    'Segoe UI Variable Text', 'Segoe UI', 'Inter', system-ui, -apple-system, 'Helvetica Neue',
-    Arial, sans-serif;
+  --bg: #FAF5EC;            /* warm paper */
+  --bg-grid: #EAE1CF;       /* graph-paper line */
+  --bg-raised: #FFFFFF;     /* cards */
+  --bg-input: #F6F0E3;      /* fields */
+  --border: #E8DEC9;
+  --border-strong: #D8CBAE;
+  --text: #201A12;          /* warm ink */
+  --text-dim: #5C5244;
+  --text-faint: #938A77;
+  --accent: #E8744F;        /* coral — the one action color */
+  --accent-deep: #D45F3A;
+  --accent-soft: rgba(232, 116, 79, 0.14);
+  --butter: #FFD84D;
+  --butter-ink: #6B5200;
+  --danger: #B3261E;
+  --danger-soft: #FBEAE7;
+  --ok: #2FA896;
+  --warn: #B07D1A;
+  --warn-soft: #FFF3C4;
+  --radius: 14px;
+  --shadow-soft: 0 1px 4px rgba(66, 50, 24, 0.07);
+  --shadow: 0 2px 10px rgba(66, 50, 24, 0.08), 0 14px 34px rgba(66, 50, 24, 0.07);
+  --font: 'Figtree', 'Almarai', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Figtree', sans-serif;
   --mono: 'Cascadia Code', 'SF Mono', Consolas, monospace;
 }
 
@@ -35,6 +42,9 @@ body,
 body {
   margin: 0;
   background: var(--bg);
+  background-image: linear-gradient(var(--bg-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+  background-size: 36px 36px;
   color: var(--text);
   font-family: var(--font);
   font-size: 15px;
@@ -53,7 +63,7 @@ a {
   color: var(--accent);
 }
 
-/* ===== App layout: wide = split, narrow = stack (PRD §5) ===== */
+/* ===== App layout: wide = split, narrow = stack ===== */
 .app {
   display: flex;
   flex-direction: column;
@@ -77,7 +87,7 @@ a {
 .capture-pane {
   overflow-y: auto;
   padding: 16px 20px;
-  background: var(--bg-raised);
+  background: rgba(255, 255, 255, 0.5);
 }
 
 @media (max-width: 900px) {
@@ -89,6 +99,10 @@ a {
   .capture-pane {
     order: 0;
     border-bottom: 1px solid var(--border);
+    /* A flex child with overflow:auto shrinks to nothing when the feed is tall —
+       in the stacked layout the capture pane must keep its natural height. */
+    flex-shrink: 0;
+    overflow-y: visible;
   }
   .feed-pane {
     order: 1;
@@ -102,33 +116,36 @@ a {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 10px 20px;
+  padding: 11px 20px;
   border-bottom: 1px solid var(--border);
-  background: var(--bg-raised);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(6px);
   flex-wrap: wrap;
 }
 
 .brand {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
 }
 
 .brand-name {
-  font-weight: 650;
-  letter-spacing: 0.02em;
-  font-size: 17px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  font-size: 19px;
 }
 
 .brand-stamp {
-  font-size: 11px;
-  letter-spacing: 0.34em;
+  font-size: 9px;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
   color: var(--text-faint);
   border: 1px solid var(--border-strong);
-  padding: 2px 7px 2px 9px;
-  border-radius: 3px;
+  padding: 2px 5px 2px 8px;
+  border-radius: 4px;
   user-select: none;
+  white-space: nowrap;
 }
 
 .topbar-spacer {
@@ -143,31 +160,41 @@ a {
 
 select,
 .btn {
-  background: var(--bg-input);
+  background: var(--bg-raised);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 7px 12px;
+  border-radius: 999px;
+  padding: 7px 14px;
   cursor: pointer;
+  font-weight: 600;
+  box-shadow: var(--shadow-soft);
 }
 
 .btn:hover {
-  border-color: var(--accent);
+  border-color: var(--border-strong);
+  background: var(--bg-input);
 }
 
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #06121f;
-  font-weight: 600;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 3px 0 var(--accent-deep);
 }
 
 .btn-primary:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.06);
+  background: var(--accent);
+}
+
+.btn-primary:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--accent-deep);
 }
 
 .btn-danger {
   background: var(--danger-soft);
-  border-color: var(--danger);
+  border-color: #e7b4ad;
   color: var(--danger);
 }
 
@@ -175,11 +202,13 @@ select,
   background: transparent;
   border-color: transparent;
   color: var(--text-dim);
+  box-shadow: none;
 }
 
 .btn-ghost:hover {
   color: var(--text);
   border-color: var(--border);
+  background: var(--bg-input);
 }
 
 .btn:disabled {
@@ -187,15 +216,17 @@ select,
   cursor: not-allowed;
 }
 
-/* ===== Storage status (PRD §2.2) ===== */
+/* ===== Storage / sync status chips ===== */
 .storage-status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  padding: 3px 10px;
+  font-weight: 600;
+  padding: 3px 11px;
   border-radius: 999px;
   border: 1px solid var(--border);
+  background: var(--bg-raised);
   cursor: help;
 }
 
@@ -210,7 +241,8 @@ select,
 }
 
 .storage-status.at-risk {
-  border-color: var(--warn);
+  border-color: #ead58a;
+  background: var(--warn-soft);
   color: var(--warn);
 }
 
@@ -228,41 +260,88 @@ select,
   top: 0;
   z-index: 5;
   padding: 10px 0;
-  background: linear-gradient(var(--bg) 75%, transparent);
+  background: linear-gradient(var(--bg) 70%, transparent);
 }
 
 .command-bar input {
   width: 100%;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 11px 14px;
+  background: var(--bg-raised);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 12px 20px;
   font-size: 15px;
   outline: none;
+  box-shadow: var(--shadow-soft);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .command-bar input:focus {
-  border-color: var(--accent);
+  border-color: var(--text);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .result-note {
-  margin: 8px 2px;
+  margin: 8px 4px;
   font-size: 13px;
   color: var(--text-dim);
 }
 
 .result-note.strong {
-  color: var(--warn);
+  color: var(--danger);
+  font-weight: 600;
 }
 
-/* ===== Capture zone (PRD §3.A) ===== */
+/* ===== Capture zone ===== */
+/* The butter "next reference" card — the one loud element on screen. */
+.next-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--butter);
+  border: 2px solid var(--text);
+  border-radius: 16px;
+  padding: 12px 18px;
+  box-shadow: 3px 3px 0 var(--text);
+  margin-bottom: 14px;
+}
+
+.next-card small {
+  display: block;
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--butter-ink);
+}
+
+.next-card .next-big {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 34px;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+.next-card .next-hand {
+  font-family: 'Caveat', cursive;
+  font-size: 19px;
+  color: var(--butter-ink);
+  transform: rotate(-4deg);
+  text-align: right;
+}
+
+.next-card.dry {
+  background: var(--warn-soft);
+  box-shadow: none;
+  border-style: dashed;
+}
+
 .capture-zone {
   border: 1.5px dashed var(--border-strong);
   border-radius: var(--radius);
-  background: var(--bg-input);
+  background: var(--bg-raised);
   padding: 12px;
-  transition: border-color 120ms;
+  transition: border-color 120ms, background 120ms;
 }
 
 .capture-zone.dragover {
@@ -290,9 +369,10 @@ select,
 .attachment {
   position: relative;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
   max-width: 140px;
+  box-shadow: var(--shadow-soft);
 }
 
 .attachment img {
@@ -306,7 +386,7 @@ select,
   position: absolute;
   top: 2px;
   right: 2px;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(32, 26, 18, 0.75);
   border: none;
   color: #fff;
   border-radius: 6px;
@@ -318,7 +398,7 @@ select,
   width: 100%;
   border: none;
   border-top: 1px solid var(--border);
-  background: var(--bg-raised);
+  background: var(--bg-input);
   font-size: 11px;
   padding: 3px 6px;
   outline: none;
@@ -345,10 +425,10 @@ select,
 
 .source-input input {
   flex: 1;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 8px 0 0 8px;
-  padding: 8px 11px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px 0 0 999px;
+  padding: 8px 14px;
   outline: none;
   min-width: 0;
 }
@@ -359,15 +439,15 @@ select,
 
 .source-input .pin,
 .source-input .hist {
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-left: none;
-  background: var(--bg-input);
+  background: var(--bg-raised);
   cursor: pointer;
   padding: 0 10px;
 }
 
 .source-input .hist {
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 999px 999px 0;
 }
 
 .source-input .pin.pinned {
@@ -382,11 +462,11 @@ select,
   right: 0;
   background: var(--bg-raised);
   border: 1px solid var(--border-strong);
-  border-radius: 8px;
+  border-radius: 12px;
   z-index: 20;
   max-height: 220px;
   overflow-y: auto;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow);
 }
 
 .source-history button {
@@ -395,7 +475,7 @@ select,
   text-align: start;
   background: none;
   border: none;
-  padding: 8px 12px;
+  padding: 8px 14px;
   cursor: pointer;
 }
 
@@ -405,58 +485,68 @@ select,
 
 .dir-toggle {
   display: inline-flex;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
   overflow: hidden;
 }
 
 .dir-toggle button {
-  background: var(--bg-input);
+  background: var(--bg-raised);
   border: none;
-  padding: 7px 10px;
+  padding: 7px 11px;
   cursor: pointer;
   font-size: 12px;
-  color: var(--text-dim);
+  font-weight: 700;
+  color: var(--text-faint);
 }
 
 .dir-toggle button.on {
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--text);
+  color: var(--bg);
 }
 
-/* ===== Success ref display (PRD §3.A: legible at arm's length) ===== */
+/* ===== Success ref display (post-capture butter moment) ===== */
 .success-ref {
   margin-top: 14px;
   text-align: center;
-  background: var(--accent-soft);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
-  padding: 18px 10px 14px;
+  background: var(--butter);
+  border: 2px solid var(--text);
+  border-radius: 16px;
+  box-shadow: 3px 3px 0 var(--text);
+  padding: 16px 10px 13px;
 }
 
 .success-ref .ref {
-  font-family: var(--mono);
-  font-size: clamp(40px, 9vw, 64px);
-  font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 0.02em;
-  line-height: 1.1;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(40px, 9vw, 60px);
+  color: var(--text);
+  letter-spacing: -0.01em;
+  line-height: 1.05;
   user-select: all;
 }
 
 .success-ref .hint {
   font-size: 12.5px;
-  color: var(--text-dim);
-  margin-top: 4px;
+  font-weight: 600;
+  color: var(--butter-ink);
+  margin-top: 3px;
 }
 
 /* ===== Feed ===== */
 .insight-card {
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 18px;
   background: var(--bg-raised);
-  margin-bottom: 12px;
+  margin-bottom: 13px;
   overflow: hidden;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.insight-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
 }
 
 .insight-card.deleted {
@@ -468,24 +558,29 @@ select,
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 14px;
-  border-bottom: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.02);
+  padding: 10px 16px;
+  border-bottom: 1px dashed var(--border-strong);
 }
 
 .card-ref {
-  font-family: var(--mono);
-  font-weight: 700;
-  color: var(--accent);
-  font-size: 16px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--text);
+  font-size: 18px;
+  letter-spacing: -0.01em;
 }
 
 .card-source {
-  color: var(--text-dim);
-  font-size: 13px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 11px;
+  background: var(--text-faint);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 40%;
 }
 
 .card-date {
@@ -496,12 +591,13 @@ select,
 }
 
 .card-body {
-  padding: 12px 14px;
+  padding: 13px 16px;
 }
 
 .card-body img {
   max-width: 100%;
-  border-radius: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
   display: block;
 }
 
@@ -518,7 +614,8 @@ select,
 .unknown-block {
   border: 1px dashed var(--warn);
   color: var(--warn);
-  border-radius: 6px;
+  background: var(--warn-soft);
+  border-radius: 8px;
   padding: 8px 10px;
   font-size: 13px;
 }
@@ -526,13 +623,12 @@ select,
 .card-actions {
   display: flex;
   gap: 6px;
-  padding: 6px 10px;
-  border-top: 1px solid var(--border);
+  padding: 6px 10px 9px;
   justify-content: flex-end;
 }
 
 .card-actions .btn {
-  padding: 4px 10px;
+  padding: 4px 12px;
   font-size: 12.5px;
 }
 
@@ -544,6 +640,10 @@ select,
   color: var(--text-dim);
   font-size: 13px;
   flex-wrap: wrap;
+}
+
+.feed-controls input[type='checkbox'] {
+  accent-color: var(--accent);
 }
 
 .feed-empty {
@@ -563,14 +663,15 @@ select,
 }
 
 .banner.warn {
-  background: rgba(255, 184, 77, 0.1);
+  background: var(--warn-soft);
   color: var(--warn);
 }
 
 .error-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(4, 8, 14, 0.75);
+  background: rgba(46, 36, 20, 0.45);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -580,23 +681,26 @@ select,
 
 .dialog {
   background: var(--bg-raised);
-  border: 1px solid var(--border-strong);
-  border-radius: 14px;
-  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
   max-width: 560px;
   width: 100%;
   max-height: 88vh;
   overflow-y: auto;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow);
 }
 
 .dialog h2 {
   margin: 0 0 10px;
-  font-size: 18px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -0.01em;
 }
 
 .dialog.error-dialog {
-  border-color: var(--danger);
+  border: 2px solid var(--danger);
 }
 
 .dialog.error-dialog h2 {
@@ -605,23 +709,25 @@ select,
 
 .dialog label {
   display: block;
-  font-size: 13px;
+  font-size: 12.5px;
+  font-weight: 700;
   color: var(--text-dim);
-  margin: 12px 0 4px;
+  margin: 12px 0 5px;
 }
 
 .dialog input[type='text'],
 .dialog input[type='number'] {
   width: 100%;
   background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 9px 12px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 10px 13px;
   outline: none;
 }
 
 .dialog input:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .dialog-actions {
@@ -633,9 +739,10 @@ select,
 
 .dialog .warning-box {
   background: var(--danger-soft);
-  border: 1px solid var(--danger);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border: 1px solid #e7b4ad;
+  color: var(--danger);
+  border-radius: 12px;
+  padding: 10px 13px;
   font-size: 13.5px;
   margin-top: 10px;
 }
@@ -645,7 +752,7 @@ kbd {
   background: var(--bg-input);
   border: 1px solid var(--border-strong);
   border-bottom-width: 2px;
-  border-radius: 5px;
+  border-radius: 6px;
   padding: 1px 6px;
   font-size: 12px;
 }
@@ -667,10 +774,12 @@ kbd {
 
 .verify-report .issue {
   color: var(--danger);
+  font-weight: 600;
 }
 
 .verify-report .ok-line {
   color: var(--ok);
+  font-weight: 600;
 }
 
 .muted {
@@ -678,7 +787,7 @@ kbd {
   font-size: 12.5px;
 }
 
-/* ===== Print view (PRD §3.C): visible only when printing ===== */
+/* ===== Print view (unchanged mechanics; typography harmonized later) ===== */
 .print-root {
   display: none;
 }
@@ -688,15 +797,16 @@ kbd {
   bottom: 18px;
   right: 18px;
   background: var(--bg-raised);
-  border: 1px solid var(--accent);
-  border-radius: 10px;
+  border: 1.5px solid var(--text);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 var(--text);
   padding: 10px 16px;
   z-index: 60;
   font-size: 13.5px;
+  font-weight: 600;
 }
 
 @media print {
-  /* The dark app theme must never bleed into paper: white page, black ink. */
   html,
   body {
     background: #fff !important;
@@ -728,8 +838,6 @@ kbd {
   }
   .print-item img {
     max-width: 100%;
-    /* Nearly a full page, so screenshots stay readable; page-break-inside: avoid
-       keeps the image on one page with its heading. */
     max-height: 85vh;
     object-fit: contain;
   }
