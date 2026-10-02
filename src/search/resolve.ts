@@ -1,5 +1,5 @@
 import { db, type InsightyyyDB } from '../db/db';
-import type { Insight } from '../db/types';
+import type { Insight, Project } from '../db/types';
 import { normaliseRanges, type ClampNote, type IdQuery } from './parser';
 
 export interface IdQueryResult {
@@ -47,6 +47,35 @@ export async function resolveIdQuery(
   }
   insights.sort((a, b) => a.ref_id - b.ref_id); // ascending, regardless of query order
   return { insights, purgedRefs, deletedRefs, missingRefs, clamped };
+}
+
+export interface CrossProjectResult {
+  /** All active matches, each labelled with its project. Ordered by project, then ref. */
+  items: Array<{ insight: Insight; project: Project }>;
+  /** Per-project resolution details (for notes), keyed by project id. */
+  byProject: Map<string, IdQueryResult>;
+  /** The projects that were queried. */
+  projects: Project[];
+}
+
+/**
+ * Resolve one ID query across SEVERAL projects (reusable prefixes, approved 2026-10):
+ * the same handwritten "Q3-42" may exist in more than one project — every match is
+ * returned, labelled, never silently narrowed.
+ */
+export async function resolveIdQueryAcross(
+  projects: Project[],
+  query: IdQuery,
+  database: InsightyyyDB = db,
+): Promise<CrossProjectResult> {
+  const items: CrossProjectResult['items'] = [];
+  const byProject = new Map<string, IdQueryResult>();
+  for (const project of projects) {
+    const result = await resolveIdQuery(project.id, project.current_seq, query, database);
+    byProject.set(project.id, result);
+    for (const insight of result.insights) items.push({ insight, project });
+  }
+  return { items, byProject, projects };
 }
 
 /**

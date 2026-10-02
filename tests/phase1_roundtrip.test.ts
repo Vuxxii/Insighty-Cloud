@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { InsightyyyDB } from '../src/db/db';
-import { createProject, PrefixConflictError } from '../src/db/projects';
+import { createProject } from '../src/db/projects';
 import { captureInsight } from '../src/db/insights';
 import { exportProject } from '../src/backup/exporter';
 import {
@@ -179,15 +179,17 @@ describe('Phase 1 verify gate: export → import-as-new → export round-trip', 
     await expect(parseImportFile(tampered)).rejects.toBeInstanceOf(ImportValidationError);
   });
 
-  it('import-as-new refuses a prefix collision instead of renumbering', async () => {
+  it('import-as-new keeps the prefix even when another project already uses it', async () => {
     const source = makeDb();
     const project = await seedProject(source);
     const exported = await exportProject(project.id, { format: 'json', database: source });
     const parsed = await parseImportFile(exported.blob);
-    // Importing into the SAME db where prefix Q3 is active must throw.
-    await expect(importAsNewProject(parsed, source)).rejects.toBeInstanceOf(PrefixConflictError);
-    // Nothing was written: still exactly one project.
-    expect(await source.projects.count()).toBe(1);
+    // Prefixes are reusable: importing into the SAME db where Q3 is active succeeds,
+    // preserving every ref_id and the prefix exactly — never renumbering.
+    const imported = await importAsNewProject(parsed, source);
+    expect(imported.prefix).toBe('Q3');
+    expect(imported.current_seq).toBe(3);
+    expect(await source.projects.count()).toBe(2);
   });
 
   it('merge renumbers continuing from current_seq and reports the mapping', async () => {

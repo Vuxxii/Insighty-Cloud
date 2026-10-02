@@ -49,11 +49,14 @@ function BlockView({ block }: { block: Block }) {
 export function InsightCard({
   insight,
   project,
+  projectTag = false,
   onEdit,
   onPurge,
 }: {
   insight: Insight;
   project: Project;
+  /** Show the project bubble (results spanning multiple projects). */
+  projectTag?: boolean;
   onEdit: (insight: Insight) => void;
   onPurge: (insight: Insight) => void;
 }) {
@@ -84,6 +87,11 @@ export function InsightCard({
         <span className="card-ref">
           {project.prefix}-{insight.ref_id}
         </span>
+        {projectTag && (
+          <span className="card-source" style={{ background: tagColor(project.id) }}>
+            {project.name}
+          </span>
+        )}
         {insight.source_tag && (
           <span className="card-source" style={{ background: tagColor(insight.source_tag) }}>
             {insight.source_tag}

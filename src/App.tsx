@@ -10,6 +10,7 @@ import {
   CAPTURE_TEXT_EVENT,
 } from './components/CaptureZone';
 import { Banners, ErrorSurface, ShortcutOverlay } from './components/Overlays';
+import { ProjectsHome } from './components/ProjectsHome';
 import { listInsights } from './db/insights';
 import { printProject } from './pdf/print';
 import { consumeShareIntake } from './pwa/shareIntake';
@@ -73,6 +74,11 @@ function AppShell() {
         return;
       }
       if (e.key === 'Escape') {
+        if (app.query === '' && app.view === 'project') {
+          // Second Esc (or Esc with no query) returns to the projects grid.
+          app.goHome();
+          return;
+        }
         app.clearQuery();
         if (commandBarRef.current === document.activeElement) commandBarRef.current?.blur();
         if (!app.isMobile) app.focusCapture();
@@ -143,6 +149,11 @@ function AppShell() {
         <TopBar onPrint={() => void startPrint()} />
         <ErrorSurface />
         <Banners />
+        {app.view === 'home' ? (
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            <ProjectsHome />
+          </div>
+        ) : (
         <div className="app-body">
           <main className="feed-pane">
             <CommandBar ref={commandBarRef} />
@@ -152,6 +163,7 @@ function AppShell() {
             <CaptureZone />
           </aside>
         </div>
+        )}
         {shortcutsOpen && <ShortcutOverlay onClose={() => setShortcutsOpen(false)} />}
         {printProgress && printProgress[0] < printProgress[1] && (
           <div className="print-progress">

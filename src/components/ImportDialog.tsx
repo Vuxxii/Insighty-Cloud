@@ -8,7 +8,6 @@ import {
   type ImportMode,
   type ParsedImport,
 } from '../backup/importer';
-import { PrefixConflictError } from '../db/projects';
 import { guardWrite } from '../ui/errorBus';
 
 export function ImportDialog({ onClose }: { onClose: () => void }) {
@@ -19,14 +18,12 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
   const [targetId, setTargetId] = useState<string>('');
   const [typedName, setTypedName] = useState('');
   const [mergeAck, setMergeAck] = useState(false);
-  const [prefixConflict, setPrefixConflict] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
 
   async function onFile(file: File) {
     setParseError(null);
     setParsed(null);
-    setPrefixConflict(null);
     try {
       setParsed(await parseImportFile(file));
     } catch (err) {
@@ -45,7 +42,6 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
   async function run() {
     if (!parsed) return;
     setBusy(true);
-    setPrefixConflict(null);
     try {
       if (mode === 'new-project') {
         const project = await guardWrite(() => importAsNewProject(parsed));
@@ -64,11 +60,8 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
         );
       }
       await app.refresh();
-    } catch (err) {
-      if (err instanceof PrefixConflictError) {
-        setPrefixConflict(err.prefix);
-      }
-      // other errors already surfaced by guardWrite
+    } catch {
+      // errors already surfaced by guardWrite
     } finally {
       setBusy(false);
     }
@@ -135,14 +128,6 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
                     <strong>Merge into an existing project</strong> (renumbering — use with care).
                   </label>
                 </div>
-
-                {prefixConflict && mode === 'new-project' && (
-                  <div className="warning-box">
-                    An active project already uses the prefix <strong>{prefixConflict}</strong>.
-                    Archive or rename that project first — Insightyyy will never renumber imported
-                    references to work around a collision.
-                  </div>
-                )}
 
                 {(mode === 'replace' || mode === 'merge') && (
                   <>

@@ -11,13 +11,6 @@ export function suggestPrefix(name: string): string {
   return initials || 'P';
 }
 
-export class PrefixConflictError extends Error {
-  constructor(public prefix: string) {
-    super(`Prefix "${prefix}" is already used by a non-archived project.`);
-    this.name = 'PrefixConflictError';
-  }
-}
-
 export function validatePrefix(prefix: string): string | null {
   if (!PREFIX_RE.test(prefix)) {
     return 'Prefix must be 1–6 letters or digits.';
@@ -25,23 +18,10 @@ export function validatePrefix(prefix: string): string | null {
   return null;
 }
 
-/** Prefix uniqueness is enforced among non-archived projects only (PRD §3.A.0), so it
- * cannot be a plain unique index — checked in code inside the same transaction. */
-async function assertPrefixFree(
-  database: InsightyyyDB,
-  prefix: string,
-  exceptId?: string,
-): Promise<void> {
-  const clash = await database.projects
-    .filter(
-      (p) =>
-        p.archived_at === null &&
-        p.prefix.toUpperCase() === prefix.toUpperCase() &&
-        p.id !== exceptId,
-    )
-    .first();
-  if (clash) throw new PrefixConflictError(prefix);
-}
+/* Prefixes are REUSABLE across projects (approved 2026-10): no uniqueness check
+ * anywhere. A prefixed search that matches several projects shows every match,
+ * labelled by project — ambiguity is surfaced, never silently resolved. Within a
+ * project, ref_ids are still assigned exactly once, forever (D1 unchanged). */
 
 export async function createProject(
   name: string,
@@ -50,22 +30,19 @@ export async function createProject(
 ): Promise<Project> {
   const invalid = validatePrefix(prefix);
   if (invalid) throw new Error(invalid);
-  return database.transaction('rw', database.projects, async () => {
-    await assertPrefixFree(database, prefix);
-    const now = nowIso();
-    const project: Project = {
-      id: uuid(),
-      name: name.trim(),
-      prefix,
-      current_seq: 0,
-      created_at: now,
-      updated_at: now,
-      archived_at: null,
-      dirty: 1,
-    };
-    await database.projects.add(project);
-    return project;
-  });
+  const now = nowIso();
+  const project: Project = {
+    id: uuid(),
+    name: name.trim(),
+    prefix,
+    current_seq: 0,
+    created_at: now,
+    updated_at: now,
+    archived_at: null,
+    dirty: 1,
+  };
+  await database.projects.add(project);
+  return project;
 }
 
 export async function renameProject(
@@ -80,9 +57,6 @@ export async function renameProject(
   return database.transaction('rw', database.projects, async () => {
     const project = await database.projects.get(id);
     if (!project) throw new Error('Project not found.');
-    if (patch.prefix !== undefined && project.archived_at === null) {
-      await assertPrefixFree(database, patch.prefix, id);
-    }
     const next: Project = {
       ...project,
       name: patch.name?.trim() ?? project.name,
@@ -103,10 +77,6 @@ export async function setArchived(
   return database.transaction('rw', database.projects, async () => {
     const project = await database.projects.get(id);
     if (!project) throw new Error('Project not found.');
-    if (!archived) {
-      // Un-archiving re-enters the non-archived prefix namespace — must not collide.
-      await assertPrefixFree(database, project.prefix, id);
-    }
     const next: Project = {
       ...project,
       archived_at: archived ? nowIso() : null,
@@ -130,14 +100,18 @@ export async function listProjects(
   };
 }
 
-/** Resolve a prefix (case-insensitive) to a project — archived projects remain
- * resolvable via prefixed queries (PRD §3.D). Non-archived wins on collision. */
-export async function findProjectByPrefix(
+/** ALL projects matching a prefix, case-insensitively — archived included, since a
+ * handwritten pointer must keep resolving (PRD §3.D). Active projects first. */
+export async function findProjectsByPrefix(
   prefix: string,
   database: InsightyyyDB = db,
-): Promise<Project | undefined> {
+): Promise<Project[]> {
   const matches = await database.projects
     .filter((p) => p.prefix.toUpperCase() === prefix.toUpperCase())
     .toArray();
-  return matches.find((p) => p.archived_at === null) ?? matches[0];
+  matches.sort((a, b) =>
+    (a.archived_at === null ? 0 : 1) - (b.archived_at === null ? 0 : 1) ||
+    a.name.localeCompare(b.name),
+  );
+  return matches;
 }

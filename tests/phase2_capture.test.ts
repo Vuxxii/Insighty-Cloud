@@ -107,10 +107,12 @@ describe('project prefixes (PRD §3.A.0)', () => {
     expect(suggestPrefix('Quarter Three')).toBe('QT');
     expect(suggestPrefix('deep-work journal club extra words here')).toBe('DJCEWH');
   });
-  it('rejects prefix collisions among non-archived projects, case-insensitively', async () => {
+  it('allows duplicate prefixes across projects (reusable prefixes, approved 2026-10)', async () => {
     const database = makeDb();
     await createProject('One', 'Q3', database);
-    await expect(createProject('Two', 'q3', database)).rejects.toThrow(/already used/);
+    const second = await createProject('Two', 'q3', database);
+    expect(second.prefix).toBe('q3');
+    expect(await database.projects.count()).toBe(2);
   });
   it('allows renaming a prefix (UI shows the permanence warning)', async () => {
     const database = makeDb();
