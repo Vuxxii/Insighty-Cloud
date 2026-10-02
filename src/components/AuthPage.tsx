@@ -1,4 +1,8 @@
 import { useState } from 'react';
+import './auth.css';
+import '@fontsource/bricolage-grotesque/800.css';
+import '@fontsource/figtree/400.css';
+import '@fontsource/figtree/700.css';
 import {
   recoverAccount,
   requestEmailReset,
@@ -10,9 +14,9 @@ import {
 type Mode = 'signin' | 'signup' | 'recover' | 'unlock';
 
 /**
- * The credentials page. Gates the app when cloud is configured. E2E model shown to
- * the user honestly: we cannot read their data, and the recovery key is the only
- * fallback for a forgotten password.
+ * The credentials screen ("warm paper" family). Gates the app when cloud is
+ * configured. E2E model shown to the user honestly: we cannot read their data, and
+ * the recovery key is the only fallback for a forgotten password.
  */
 export function AuthPage({
   initialMode,
@@ -74,71 +78,67 @@ export function AuthPage({
       }
     });
 
+  const brandRow = (
+    <div className="brand-row">
+      <span className="logo">Insightyyy</span>
+      <span className="stamp">H.H. HAKAMI</span>
+    </div>
+  );
+
   // Post-signup: the recovery key is shown EXACTLY once.
   if (newRecoveryKey) {
     return (
-      <div className="error-overlay" style={{ position: 'static', minHeight: '100vh' }}>
-        <div className="dialog">
-          <h2>Save your recovery key now</h2>
-          <p>
-            Your insights are end-to-end encrypted. If you forget your password, this key is the{' '}
-            <strong>only</strong> way to recover your library — we cannot reset it for you, by
-            design.
-          </p>
-          <div
-            style={{
-              fontFamily: 'var(--mono)',
-              fontSize: 18,
-              padding: '14px 10px',
-              background: 'var(--bg-input)',
-              border: '1px solid var(--accent)',
-              borderRadius: 8,
-              textAlign: 'center',
-              userSelect: 'all',
-              overflowWrap: 'break-word',
-            }}
-          >
-            {newRecoveryKey}
-          </div>
-          <div className="dialog-actions" style={{ justifyContent: 'flex-start' }}>
+      <div className="ap">
+        <div className="center">
+          <div className="card">
+            {brandRow}
+            <h2>Save your recovery key now</h2>
+            <p className="intro">
+              Your insights are end-to-end encrypted. If you forget your password, this key is the{' '}
+              <b>only</b> way to recover your library — we cannot reset it for you, by design.
+            </p>
+            <div className="keycard">
+              <small>RECOVERY KEY — SHOWN ONCE</small>
+              <span className="key">{newRecoveryKey}</span>
+            </div>
+            <div className="keyrow">
+              <button
+                type="button"
+                className="btn-soft"
+                onClick={() => {
+                  const blob = new Blob(
+                    [`Insightyyy recovery key for ${email}\n\n${newRecoveryKey}\n`],
+                    { type: 'text/plain' },
+                  );
+                  const a = document.createElement('a');
+                  a.href = URL.createObjectURL(blob);
+                  a.download = 'insightyyy-recovery-key.txt';
+                  a.click();
+                  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+                }}
+              >
+                ⬇ Download file
+              </button>
+              <button
+                type="button"
+                className="btn-soft"
+                onClick={() => void navigator.clipboard?.writeText(newRecoveryKey)}
+              >
+                ⧉ Copy
+              </button>
+            </div>
+            <label className="ack">
+              <input
+                type="checkbox"
+                checked={recoveryAcknowledged}
+                onChange={(e) => setRecoveryAcknowledged(e.target.checked)}
+              />
+              <span>I saved my recovery key somewhere safe (not only on this device).</span>
+            </label>
+            {notice && <p className="notice">{notice}</p>}
             <button
               type="button"
-              className="btn"
-              onClick={() => {
-                const blob = new Blob(
-                  [`Insightyyy recovery key for ${email}\n\n${newRecoveryKey}\n`],
-                  { type: 'text/plain' },
-                );
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'insightyyy-recovery-key.txt';
-                a.click();
-                setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-              }}
-            >
-              Download as file
-            </button>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => void navigator.clipboard?.writeText(newRecoveryKey)}
-            >
-              Copy
-            </button>
-          </div>
-          <label style={{ color: 'inherit', marginTop: 14 }}>
-            <input
-              type="checkbox"
-              checked={recoveryAcknowledged}
-              onChange={(e) => setRecoveryAcknowledged(e.target.checked)}
-            />{' '}
-            I saved my recovery key somewhere safe (not only on this device).
-          </label>
-          {notice && <p className="muted">{notice}</p>}
-          <div className="dialog-actions">
-            <button
-              type="button"
-              className="btn btn-primary"
+              className="btn-main"
               disabled={!recoveryAcknowledged}
               onClick={() => {
                 if (notice) setMode('signin');
@@ -149,103 +149,99 @@ export function AuthPage({
               Continue
             </button>
           </div>
+          <p className="product-line">A H.H. HAKAMI PRODUCT</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="error-overlay" style={{ position: 'static', minHeight: '100vh' }}>
-      <div className="dialog" style={{ maxWidth: 440 }}>
-        <div className="brand" style={{ marginBottom: 12 }}>
-          <span className="brand-name">Insightyyy</span>
-          <span className="brand-stamp">HAKAMI</span>
-        </div>
+    <div className="ap">
+      <div className="center">
+        <div className="card">
+          {brandRow}
 
-        <h2>
-          {mode === 'signin' && 'Sign in'}
-          {mode === 'signup' && 'Create your account'}
-          {mode === 'recover' && 'Recover access'}
-          {mode === 'unlock' && `Unlock — ${lockedEmail}`}
-        </h2>
+          <h2>
+            {mode === 'signin' && 'Welcome back.'}
+            {mode === 'signup' && 'Start your first notebook.'}
+            {mode === 'recover' && 'Recover access.'}
+            {mode === 'unlock' && 'Unlock your library.'}
+          </h2>
 
-        {mode === 'signup' && (
-          <p className="muted">
-            Insights are encrypted on your device before upload. Nobody — including this service —
-            can read them without your password.
-          </p>
-        )}
-        {mode === 'unlock' && (
-          <p className="muted">
-            You are signed in, but the encryption key only lives in memory — enter your password to
-            unlock your library.
-          </p>
-        )}
+          {mode === 'signup' && (
+            <div className="lock">
+              🔒 Encrypted on your device — nobody else can read your insights. Not even us.
+            </div>
+          )}
+          {mode === 'unlock' && (
+            <p className="intro">
+              Signed in as <b>{lockedEmail}</b>. Your encryption key lives only in memory — enter
+              your password to unlock.
+            </p>
+          )}
+          {mode === 'recover' && (
+            <p className="intro">
+              Your recovery key unwraps your library, then you choose a new password.
+            </p>
+          )}
 
-        {mode !== 'unlock' && (
-          <>
-            <label>Email</label>
-            <input
-              type="text"
-              inputMode="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-            />
-          </>
-        )}
+          {mode !== 'unlock' && (
+            <>
+              <label>Email</label>
+              <input
+                type="text"
+                inputMode="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
+            </>
+          )}
 
-        {mode === 'recover' && (
-          <>
-            <label>Recovery key</label>
-            <input
-              type="text"
-              value={recoveryKeyInput}
-              onChange={(e) => setRecoveryKeyInput(e.target.value)}
-              placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
-              style={{ fontFamily: 'var(--mono)' }}
-            />
-          </>
-        )}
+          {mode === 'recover' && (
+            <>
+              <label>Recovery key</label>
+              <input
+                type="text"
+                value={recoveryKeyInput}
+                onChange={(e) => setRecoveryKeyInput(e.target.value)}
+                placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+                style={{ fontFamily: "'Cascadia Code','SF Mono',Consolas,monospace", fontSize: 13.5 }}
+              />
+            </>
+          )}
 
-        <label>{mode === 'recover' ? 'New password' : 'Password'}</label>
-        <input
-          type="password"
-          autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && mode !== 'signup') void submit();
-          }}
-        />
-        {mode === 'signup' && (
-          <>
-            <label>Repeat password</label>
-            <input
-              type="password"
-              autoComplete="new-password"
-              value={password2}
-              onChange={(e) => setPassword2(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void submit();
-              }}
-            />
-            <p className="muted">At least 10 characters, with letters and numbers.</p>
-          </>
-        )}
+          <label>{mode === 'recover' ? 'New password' : 'Password'}</label>
+          <input
+            type="password"
+            autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && mode !== 'signup') void submit();
+            }}
+          />
+          {mode === 'signup' && (
+            <>
+              <label>Repeat password</label>
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={password2}
+                onChange={(e) => setPassword2(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void submit();
+                }}
+              />
+              <p className="hint">At least 10 characters, with letters and numbers.</p>
+            </>
+          )}
 
-        {error && <div className="warning-box">{error}</div>}
-        {notice && <p className="muted">{notice}</p>}
+          {error && <div className="error">{error}</div>}
+          {notice && <p className="notice">{notice}</p>}
 
-        <div className="dialog-actions" style={{ justifyContent: 'stretch' }}>
-          <button
-            type="button"
-            className="btn btn-primary"
-            style={{ width: '100%' }}
-            disabled={busy}
-            onClick={() => void submit()}
-          >
+          <button type="button" className="btn-main" disabled={busy} onClick={() => void submit()}>
             {busy
               ? 'Working…'
               : mode === 'signin'
@@ -256,47 +252,49 @@ export function AuthPage({
                     ? 'Recover & set new password'
                     : 'Unlock'}
           </button>
-        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 14 }}>
-          {mode !== 'signin' && mode !== 'unlock' && (
-            <button type="button" className="btn btn-ghost" onClick={() => setMode('signin')}>
-              Back to sign in
-            </button>
-          )}
-          {mode === 'signin' && (
-            <>
-              <button type="button" className="btn btn-ghost" onClick={() => setMode('signup')}>
-                New here? Create an account
+          <div className="links">
+            {mode === 'signin' && (
+              <>
+                <button type="button" className="linkish" onClick={() => setMode('signup')}>
+                  New here? <b>Create an account</b>
+                </button>
+                <button type="button" className="linkish" onClick={() => setMode('recover')}>
+                  Forgot password? <b>Use your recovery key</b>
+                </button>
+              </>
+            )}
+            {mode !== 'signin' && mode !== 'unlock' && (
+              <button type="button" className="linkish" onClick={() => setMode('signin')}>
+                ← Back to sign in
               </button>
-              <button type="button" className="btn btn-ghost" onClick={() => setMode('recover')}>
-                Forgot password? Use your recovery key
+            )}
+            {mode === 'recover' && (
+              <button
+                type="button"
+                className="linkish"
+                onClick={() =>
+                  void run(async () => {
+                    await requestEmailReset(email.trim());
+                    setNotice('Reset email sent — open its link on this device, then return here.');
+                  })
+                }
+              >
+                New device? <b>Send the email reset first</b>
               </button>
-            </>
-          )}
-          {mode === 'recover' && (
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={() =>
-                void run(async () => {
-                  await requestEmailReset(email.trim());
-                  setNotice('Reset email sent — open its link on this device, then return here.');
-                })
-              }
-            >
-              New device? Send the email reset first
+            )}
+            <div className="divider" />
+            <button type="button" className="linkish" onClick={onUseOffline}>
+              Use offline without an account (local-only, no sync)
             </button>
-          )}
-          <button type="button" className="btn btn-ghost" onClick={onUseOffline}>
-            Use offline without an account (local-only, no sync)
-          </button>
-          {onBack && (
-            <button type="button" className="btn btn-ghost" onClick={onBack}>
-              ← Back to the homepage
-            </button>
-          )}
+            {onBack && (
+              <button type="button" className="linkish" onClick={onBack}>
+                ← Back to the homepage
+              </button>
+            )}
+          </div>
         </div>
+        <p className="product-line">A H.H. HAKAMI PRODUCT</p>
       </div>
     </div>
   );

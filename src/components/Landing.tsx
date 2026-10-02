@@ -79,7 +79,7 @@ export function Landing({
     <div className="ld" ref={rootRef}>
       <nav>
         <span className="logo">Insightyyy</span>
-        <span className="stamp">HAKAMI</span>
+        <span className="stamp">H.H. HAKAMI</span>
         <span className="spacer" />
         <a
           className="pill ghosty"
@@ -308,8 +308,9 @@ export function Landing({
       </section>
 
       <footer>
-        Insightyyy · a HAKAMI product ·{' '}
-        <button type="button" onClick={onUseOffline}>
+        <span style={{ letterSpacing: '.3em', fontSize: 10 }}>A H.H. HAKAMI PRODUCT</span>
+        <br />
+        <button type="button" onClick={onUseOffline} style={{ marginTop: 8 }}>
           use offline without an account
         </button>
       </footer>
