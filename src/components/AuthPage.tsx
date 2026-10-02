@@ -19,12 +19,15 @@ export function AuthPage({
   lockedEmail,
   onAuthed,
   onUseOffline,
+  onBack,
 }: {
   initialMode?: Mode;
   /** Set when a session was restored but the vault is locked. */
   lockedEmail?: string;
   onAuthed: () => void;
   onUseOffline: () => void;
+  /** Present when the landing page is behind this screen. */
+  onBack?: () => void;
 }) {
   const [mode, setMode] = useState<Mode>(initialMode ?? 'signin');
   const [email, setEmail] = useState(lockedEmail ?? '');
@@ -288,6 +291,11 @@ export function AuthPage({
           <button type="button" className="btn btn-ghost" onClick={onUseOffline}>
             Use offline without an account (local-only, no sync)
           </button>
+          {onBack && (
+            <button type="button" className="btn btn-ghost" onClick={onBack}>
+              ← Back to the homepage
+            </button>
+          )}
         </div>
       </div>
     </div>
