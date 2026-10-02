@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { db, getMeta } from '../db/db';
 import type { Block, Direction, Insight, Meta, Project } from '../db/types';
-import { createProject, findProjectByPrefix, listProjects, renameProject, setArchived } from '../db/projects';
+import { createProject, findProjectsByPrefix, listProjects, renameProject, setArchived } from '../db/projects';
 import {
   captureInsight,
   editInsight,
@@ -22,7 +22,11 @@ import {
 } from '../db/insights';
 import { resolveDirection } from '../text/direction';
 import { routeQuery } from '../search/parser';
-import { resolveIdQuery, searchText, type IdQueryResult } from '../search/resolve';
+import {
+  resolveIdQueryAcross,
+  searchText,
+  type IdQueryResult,
+} from '../search/resolve';
 import {
   checkPersistence,
   checkQuota,
@@ -34,13 +38,28 @@ import { guardWrite, reportAppError } from '../ui/errorBus';
 import { exportProject, markExported, triggerDownload } from '../backup/exporter';
 import { chooseBackupDirectory, fsAccessSupported, oneClickExport, recordCaptureAndMaybeBackup } from '../backup/autoBackup';
 import { ensureBlock, peekNextRef } from '../cloud/blocks';
-import { syncNow } from '../cloud/sync';
+import { onSyncState, syncNow } from '../cloud/sync';
 
 export type FeedState =
   | { kind: 'default'; insights: Insight[] }
-  | { kind: 'ids'; insights: Insight[]; result: IdQueryResult; project: Project }
+  | {
+      kind: 'ids';
+      /** Every match, labelled with its project (prefixes are reusable). */
+      items: Array<{ insight: Insight; project: Project }>;
+      byProject: Map<string, IdQueryResult>;
+      projects: Project[];
+      /** True when the query ran across every project, not just the active one. */
+      scopeAll: boolean;
+    }
   | { kind: 'text'; insights: Insight[]; query: string }
   | { kind: 'incomplete' };
+
+export interface ProjectCard {
+  project: Project;
+  count: number;
+  lastText: string | null;
+  lastAt: string | null;
+}
 
 export interface LastCapture {
   insightId: string;
@@ -69,7 +88,16 @@ interface AppState {
   cloudActive: boolean;
   /** The ref number the NEXT capture will take — shown BEFORE submission. */
   nextRef: number | null;
+  /** 'home' = projects grid; 'project' = the capture/feed screen. */
+  view: 'home' | 'project';
+  projectCards: ProjectCard[];
+  /** When multi-project results are showing: null = all, else included project ids. */
+  projectFilter: Set<string> | null;
 
+  goHome: () => void;
+  openProject: (id: string) => void;
+  widenScope: () => void;
+  setProjectFilter: (f: Set<string> | null) => void;
   setQuery: (q: string) => void;
   clearQuery: () => void;
   setShowDeleted: (v: boolean) => void;
@@ -122,7 +150,12 @@ export function AppProvider({
   const [lastCapture, setLastCapture] = useState<LastCapture | null>(null);
   const [persistState, setPersistState] = useState<PersistState>('unknown');
   const [quota, setQuota] = useState<QuotaStatus | null>(null);
+  const [view, setView] = useState<'home' | 'project'>('home');
+  const [projectCards, setProjectCards] = useState<ProjectCard[]>([]);
+  const [scopeAll, setScopeAll] = useState(false);
+  const [projectFilter, setProjectFilter] = useState<Set<string> | null>(null);
   const captureFocusRef = useRef<(() => void) | null>(null);
+  const lastSyncHandled = useRef<string | null>(null);
 
   // Reactive: a window that mounts hidden/narrow must not lock the app into
   // mobile behaviour (no-autofocus etc.) after it grows.
@@ -160,7 +193,7 @@ export function AppProvider({
   }, []);
 
   const runQuery = useCallback(
-    async (raw: string, projectOverride?: Project) => {
+    async (raw: string, projectOverride?: Project, scope: boolean = scopeAll) => {
       const project = projectOverride ?? activeProject;
       if (!project) {
         setFeed({ kind: 'default', insights: [] });
@@ -172,19 +205,20 @@ export function AppProvider({
         return;
       }
       if (route.type === 'prefixed') {
-        const target = await findProjectByPrefix(route.prefix);
-        if (target) {
-          // Prefixed query switches context to the resolved project (PRD §3.A.0).
-          if (target.id !== project.id) {
-            setActiveProjectId(target.id);
-            localStorage.setItem(ACTIVE_PROJECT_KEY, target.id);
-          }
+        // Prefixes are reusable: resolve against EVERY matching project; each result
+        // wears its project bubble, and single matches still switch context.
+        const targets = await findProjectsByPrefix(route.prefix);
+        if (targets.length > 0) {
           if (route.idQuery.kind === 'incomplete') {
             setFeed({ kind: 'incomplete' });
             return;
           }
-          const result = await resolveIdQuery(target.id, target.current_seq, route.idQuery);
-          setFeed({ kind: 'ids', insights: result.insights, result, project: target });
+          if (targets.length === 1 && targets[0].id !== project.id) {
+            setActiveProjectId(targets[0].id);
+            localStorage.setItem(ACTIVE_PROJECT_KEY, targets[0].id);
+          }
+          const res = await resolveIdQueryAcross(targets, route.idQuery);
+          setFeed({ kind: 'ids', ...res, scopeAll: false });
           return;
         }
       }
@@ -194,14 +228,17 @@ export function AppProvider({
           setFeed({ kind: 'incomplete' });
           return;
         }
-        const result = await resolveIdQuery(project.id, project.current_seq, idQuery);
-        setFeed({ kind: 'ids', insights: result.insights, result, project });
+        // Bare numbers: scoped to the project you're in; the filter row can widen
+        // the same query to every project.
+        const scopeProjects = scope ? allProjects : [project];
+        const res = await resolveIdQueryAcross(scopeProjects, idQuery);
+        setFeed({ kind: 'ids', ...res, scopeAll: scope });
         return;
       }
       const matches = await searchText(project.id, route.text);
       setFeed({ kind: 'text', insights: matches, query: route.text });
     },
-    [activeProject, allProjects, showDeleted],
+    [activeProject, allProjects, showDeleted, scopeAll],
   );
 
   const refresh = useCallback(async () => {
@@ -220,6 +257,60 @@ export function AppProvider({
     setQuota(await checkQuota());
   }, [activeProjectId, query, refreshProjects, runQuery]);
 
+  /** Data for the projects-home grid: per project, count + newest snippet. */
+  const loadProjectCards = useCallback(async () => {
+    const { active } = await listProjects();
+    const cards: ProjectCard[] = [];
+    for (const project of active) {
+      const rows = await db.insights.where('project_id').equals(project.id).toArray();
+      const live = rows.filter((r) => r.deleted_at === null && !r.purged);
+      live.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+      const newest = live[0] ?? null;
+      const firstText = newest?.content.find((b) => b.type === 'text');
+      cards.push({
+        project,
+        count: live.length,
+        lastText: newest
+          ? firstText?.type === 'text'
+            ? firstText.value.slice(0, 60)
+            : newest.content.some((b) => b.type === 'image')
+              ? '▦ image capture'
+              : '🔗 link capture'
+          : null,
+        lastAt: newest?.timestamp ?? null,
+      });
+    }
+    setProjectCards(cards);
+  }, []);
+
+  const goHome = useCallback(() => {
+    setView('home');
+    setQueryState('');
+    setScopeAll(false);
+    setProjectFilter(null);
+    void loadProjectCards();
+  }, [loadProjectCards]);
+
+  // Cloud sync lands quietly in the background — when a sync completes, the screen
+  // must learn about pulled projects/insights on its own (bug fix: projects were
+  // invisible on a fresh device until something else forced a redraw).
+  useEffect(() => {
+    if (!cloudActive) return;
+    return onSyncState((s) => {
+      if (s.lastSyncAt && s.lastSyncAt !== lastSyncHandled.current) {
+        lastSyncHandled.current = s.lastSyncAt;
+        void refresh();
+        void loadProjectCards();
+      }
+    });
+  }, [cloudActive, refresh, loadProjectCards]);
+
+  // A new query resets the widened scope and project filter.
+  useEffect(() => {
+    setScopeAll(false);
+    setProjectFilter(null);
+  }, [query]);
+
   // Boot
   useEffect(() => {
     (async () => {
@@ -230,6 +321,7 @@ export function AppProvider({
       if (!stored && active[0]) setActiveProjectId(active[0].id);
       setPersistState(await checkPersistence());
       setQuota(await checkQuota());
+      await loadProjectCards();
       setReady(true);
     })().catch((err) =>
       reportAppError({
@@ -278,7 +370,19 @@ export function AppProvider({
     setActiveProjectId(id);
     localStorage.setItem(ACTIVE_PROJECT_KEY, id);
     setQueryState('');
+    setView('project');
+    // The success card belongs to the project it was captured in.
+    setLastCapture(null);
   }, []);
+
+  const openProject = selectProject;
+
+  /** Re-run the current ID query across every project. */
+  const widenScope = useCallback(() => {
+    setScopeAll(true);
+    setProjectFilter(null);
+    void runQuery(query, undefined, true);
+  }, [query, runQuery]);
 
   const addProject = useCallback(
     async (name: string, prefix: string) => {
@@ -296,9 +400,10 @@ export function AppProvider({
         await ensureBlock(project.id);
       }
       await refresh();
+      await loadProjectCards();
       return project;
     },
-    [refresh, selectProject, cloudActive],
+    [refresh, selectProject, cloudActive, loadProjectCards],
   );
 
   const updateProject = useCallback(
@@ -318,8 +423,9 @@ export function AppProvider({
         setActiveProjectId(next?.id ?? null);
       }
       await refresh();
+      await loadProjectCards();
     },
-    [activeProjectId, refresh],
+    [activeProjectId, refresh, loadProjectCards],
   );
 
   const capture = useCallback(
@@ -469,6 +575,13 @@ export function AppProvider({
     isMobile,
     cloudActive,
     nextRef,
+    view,
+    projectCards,
+    projectFilter,
+    goHome,
+    openProject,
+    widenScope,
+    setProjectFilter,
     setQuery,
     clearQuery,
     setShowDeleted,

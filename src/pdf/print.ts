@@ -100,12 +100,17 @@ export function buildPrintDom(
   ensurePrintFontStyle();
   container.replaceChildren();
   const objectUrls: string[] = [];
+  // Trademark (approved): faint watermark + footer, repeating on every page via
+  // print-time position:fixed.
+  const wm = el('div', 'print-wm');
+  wm.appendChild(el('span', undefined, 'Insightyyy'));
+  container.appendChild(wm);
+  container.appendChild(el('div', 'print-foot', 'INSIGHTYYY · A H.H. HAKAMI PRODUCT'));
   const header = el('div', 'print-item');
   header.appendChild(el('h2', undefined, `${project.name} (${project.prefix})`));
   header.appendChild(
     el('p', 'print-source', `Insightyyy export — ${insights.length} insights`),
   );
-  header.appendChild(el('p', 'print-brand', 'A H.H. HAKAMI PRODUCT'));
   container.appendChild(header);
 
   return new Promise((resolve) => {

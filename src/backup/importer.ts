@@ -1,6 +1,5 @@
 import JSZip from 'jszip';
 import { db, type InsightyyyDB } from '../db/db';
-import { PrefixConflictError } from '../db/projects';
 import {
   SCHEMA_VERSION,
   nowIso,
@@ -164,23 +163,14 @@ function maxRef(parsed: ParsedImport): number {
 
 /**
  * Mode 1 — Import as new project (the device-hop path, PRD §3.C): preserves every
- * ref_id and the prefix exactly. Prefix collision with a non-archived project throws
- * PrefixConflictError so the UI can prompt archive/rename — never renumber.
+ * ref_id and the prefix exactly. Prefixes are reusable, so a matching prefix on an
+ * existing project is fine — search shows both, labelled by project.
  */
 export async function importAsNewProject(
   parsed: ParsedImport,
   database: InsightyyyDB = db,
 ): Promise<Project> {
   return database.transaction('rw', database.projects, database.insights, async () => {
-    const clash = await database.projects
-      .filter(
-        (p) =>
-          p.archived_at === null &&
-          p.prefix.toUpperCase() === parsed.file.project.prefix.toUpperCase(),
-      )
-      .first();
-    if (clash) throw new PrefixConflictError(parsed.file.project.prefix);
-
     const now = nowIso();
     const project: Project = {
       id: uuid(),
