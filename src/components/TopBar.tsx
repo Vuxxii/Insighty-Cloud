@@ -11,11 +11,28 @@ import { onSyncState, syncNow, type SyncState } from '../cloud/sync';
 import { atRiskMessage } from '../storage/durability';
 import { tagColor } from '../ui/tagColor';
 
-/** One quiet chip for storage + sync (approved mock B); detail lives in the tooltip. */
+/** One quiet chip for storage + sync (approved mock B). The explanation lives in a
+ * styled popover: instant on hover/focus for desktops, toggled by tap for phones
+ * (native `title` tooltips are slow and don't exist on touch). */
 function StatusChip() {
   const app = useApp();
   const [sync, setSync] = useState<SyncState | null>(null);
+  const [open, setOpen] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
   useEffect(() => (app.cloudActive ? onSyncState(setSync) : undefined), [app.cloudActive]);
+
+  useEffect(() => {
+    if (!pinned) return;
+    const close = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) {
+        setPinned(false);
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [pinned]);
 
   const storageWord =
     app.persistState === 'protected' ? 'Protected' : app.persistState === 'at-risk' ? 'At risk' : 'Storage';
@@ -33,28 +50,54 @@ function StatusChip() {
   const healthy =
     app.persistState === 'protected' &&
     (!app.cloudActive || (sync?.phase === 'idle' && sync.pendingPush === 0));
-  const title = [
-    app.persistState === 'at-risk' ? atRiskMessage() : 'Persistent storage granted.',
-    app.cloudActive ? (sync?.detail ?? 'End-to-end encrypted sync. Click to sync now.') : null,
-    app.quota && app.quota.quota > 0 ? `Storage used: ${Math.round(app.quota.ratio * 100)}%` : null,
-  ]
-    .filter(Boolean)
-    .join('\n');
+  const atRisk = app.persistState === 'at-risk';
+  const storageLine = atRisk
+    ? atRiskMessage()
+    : 'Persistent storage granted — the browser will not evict your library.';
+  const syncLine = !app.cloudActive ? null : (sync?.detail ?? 'End-to-end encrypted sync.');
+  const quotaLine =
+    app.quota && app.quota.quota > 0 ? `Storage used: ${Math.round(app.quota.ratio * 100)}%` : null;
 
   return (
-    <button
-      type="button"
-      className={`storage-status ${healthy ? 'protected' : app.persistState === 'at-risk' || sync?.phase === 'error' ? 'at-risk' : 'unknown'}`}
-      style={{ cursor: 'pointer', background: 'var(--bg-raised)' }}
-      title={title}
-      onClick={() => {
-        if (app.cloudActive) void syncNow();
+    <div
+      className="menu-anchor"
+      ref={wrapRef}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => {
+        if (!pinned) setOpen(false);
       }}
     >
-      <span className="dot" />
-      {storageWord}
-      {syncWord ? ` · ${syncWord}` : ''}
-    </button>
+      <button
+        type="button"
+        className={`storage-status ${healthy ? 'protected' : atRisk || sync?.phase === 'error' ? 'at-risk' : 'unknown'}`}
+        aria-expanded={open}
+        onFocus={() => setOpen(true)}
+        onBlur={() => {
+          if (!pinned) setOpen(false);
+        }}
+        onClick={() => {
+          const next = !pinned;
+          setPinned(next);
+          setOpen(next);
+        }}
+      >
+        <span className="dot" />
+        {storageWord}
+        {syncWord ? ` · ${syncWord}` : ''}
+      </button>
+      {open && (
+        <div className="status-pop">
+          <p className={atRisk ? 'warn' : undefined}>{storageLine}</p>
+          {syncLine && <p>{syncLine}</p>}
+          {quotaLine && <p>{quotaLine}</p>}
+          {app.cloudActive && (
+            <button type="button" className="btn" onClick={() => void syncNow()}>
+              Sync now
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -92,7 +135,7 @@ export function TopBar({ onPrint }: { onPrint: () => void }) {
       <StatusChip />
 
       {app.view === 'project' && app.activeProject && (
-        <div style={{ position: 'relative' }} ref={switcherRef}>
+        <div className="menu-anchor" ref={switcherRef}>
           <button type="button" className="proj-pill" onClick={() => setSwitcherOpen((v) => !v)}>
             <span className="dotp" style={{ background: tagColor(app.activeProject.id) }}>
               {app.activeProject.prefix.slice(0, 3)}
@@ -137,7 +180,7 @@ export function TopBar({ onPrint }: { onPrint: () => void }) {
         </button>
       )}
 
-      <div style={{ position: 'relative' }} ref={menuRef}>
+      <div className="menu-anchor" ref={menuRef}>
         <button
           type="button"
           className="iconbtn"
@@ -148,10 +191,7 @@ export function TopBar({ onPrint }: { onPrint: () => void }) {
           ⋯
         </button>
         {menuOpen && (
-          <div
-            className="source-history"
-            style={{ right: 0, left: 'auto', minWidth: 260, top: 'calc(100% + 6px)', maxHeight: 'none' }}
-          >
+          <div className="source-history menu-pop">
             <button
               type="button"
               onClick={() => {
