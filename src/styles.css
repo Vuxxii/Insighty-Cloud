@@ -231,7 +231,7 @@ select,
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--bg-raised);
-  cursor: help;
+  cursor: pointer;
 }
 
 .storage-status .dot {
@@ -256,6 +256,44 @@ select,
 
 .storage-status.unknown .dot {
   background: var(--text-faint);
+}
+
+/* Wrapper that anchors a dropdown to its button on desktop; on narrow screens it
+   goes position:static so the dropdown anchors to the whole .topbar instead and
+   can never be clipped off-screen. */
+.menu-anchor {
+  position: relative;
+}
+
+/* Status-chip explainer popover (replaces the slow native title tooltip). */
+.status-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 290px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 10px 14px 12px;
+  z-index: 20;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.status-pop p {
+  margin: 6px 0;
+}
+
+.status-pop .warn {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.status-pop .btn {
+  margin-top: 6px;
+  font-size: 12px;
+  padding: 5px 13px;
 }
 
 /* ===== Project pill, icon buttons, switcher (approved mock B) ===== */
@@ -340,6 +378,15 @@ select,
 .source-history.switcher button {
   display: flex;
   align-items: center;
+}
+
+/* The ⋯ menu dropdown. */
+.source-history.menu-pop {
+  right: 0;
+  left: auto;
+  min-width: 260px;
+  top: calc(100% + 6px);
+  max-height: none;
 }
 
 /* ===== Projects home (approved mock A) ===== */
@@ -744,6 +791,24 @@ select,
 
 .source-history button:hover {
   background: var(--accent-soft);
+}
+
+/* On phones the top-bar dropdowns (switcher, ⋯ menu, status popover) anchor to the
+   whole bar and span its width — anchored to their small buttons they overflow the
+   viewport's left edge. Must stay AFTER the .source-history/.switcher base rules so
+   equal-specificity overrides win. */
+@media (max-width: 900px) {
+  .topbar .menu-anchor {
+    position: static;
+  }
+  .topbar .source-history,
+  .topbar .status-pop {
+    left: 10px;
+    right: 10px;
+    width: auto;
+    min-width: 0;
+    top: calc(100% + 6px);
+  }
 }
 
 .dir-toggle {

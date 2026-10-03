@@ -359,11 +359,12 @@ export function CaptureZone() {
       </div>
 
       <div className="capture-row">
+        {/* No `capture` attribute: on Android it forces the camera open; without it
+            the OS shows its native chooser (camera / photos / files). */}
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
-          capture="environment"
           multiple
           hidden
           onChange={(e) => {
